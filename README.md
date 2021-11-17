@@ -13,13 +13,16 @@
   - It will return the same value if called with the same arguments
 
 ```js
-// simple pure functions
-const add = (num1, num2) => {
-  return num1 + num2;
+// A pure functions
+const square = (number) => {
+  return number * number;
 };
 
-const sayHello = (name) => {
-  return `Hello there ${name}!`;
+// A function with side effects
+let number = 1;
+const square = () => {
+  console.log("Hello World!");
+  return number * number;
 };
 ```
 
