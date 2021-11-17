@@ -1,70 +1,106 @@
-# Getting Started with Create React App
+# Data Fetching & Other Side Effects
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### Two Rules for Hooks
 
-## Available Scripts
+1. Don't call Hooks inside loops, conditions, or nested functions. **Always use Hooks at the top level of your React functions.**
+2. Only call Hooks from React functions.
+3. All hooks start with the prefix `use`.
 
-In the project directory, you can run:
+### Pure Functions
 
-### `npm start`
+- A function is said to be pure if:
+  - It produces no side-effects
+  - It will return the same value if called with the same arguments
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```js
+// simple pure functions
+const add = (num1, num2) => {
+  return num1 + num2;
+};
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+const sayHello = (name) => {
+  return `Hello there ${name}!`;
+};
+```
 
-### `npm test`
+### Side Effects
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Any operation that modifies the state of the computer or interacts with something outside of your program is said to have a **side effect**
+- Common _side effects_:
+  - Writing to standard out (eg. `console.log`)
+  - Modifying the DOM directly (instead of relying on React)
+  - Establishing socket connections (eg. `ws` or `Socket.io`)
+  - Retrieving data from an API (eg. `axios`, `jQuery`, or the `fetch` API)
+  - Setting timers or intervals
 
-### `npm run build`
+### `useEffect`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- `useEffect` is a Hook we can use to deal with side effects in our components
+- The _effect_ hook fires after the browser has _painted_ the DOM
+- Multiple _effect_ hooks can be used inside of a single component to group similar operations together
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```jsx
+const MyComponent = (props) => {
+  const [user, setUser] = useState({});
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+  useEffect(() => {
+    // retrieve user information from an API and update local state with the response
+    fetch(`/users/${props.userId}`)
+      .then((res) => res.json())
+      .then((json) => setUser(json));
+  });
 
-### `npm run eject`
+  return (
+    <div className="my-component">
+      <p>You are logged in as {user.username}</p>
+    </div>
+  );
+};
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Dependencies
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- The second argument to `useEffect` is a dependency array that lets you specify when you want the hook to run
+- The hook will run again anytime the value of a dependency changes
+- **NOTE:** It is possible to get stuck in an infinite loop if the _effect_ hook updates a value in the dependency array
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```jsx
+// will run every time the value of user.firstName changes
+useEffect(() => {
+  document.title = `${user.firstName}'s Home Page`;
+}, [user.firstName]);
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+// infinite loop because it runs every time count gets updated
+useEffect(() => {
+  setCount(count + 1);
+}, [count]);
+```
 
-## Learn More
+### Cleanup
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- Sometimes side effects need to be cleaned up (eg. socket connections terminated)
+- To perform cleanup, return a function from your `useEffect`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```jsx
+const [timer, setTimer] = useState(0);
 
-### Code Splitting
+useEffect(() => {
+  // set up an interval to increment a timer
+  const myInterval = setInterval(() => {
+    setTimer((timer) => timer + 1);
+  }, 1000);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+  // declare a cleanup function
+  const cleanup = () => {
+    clearInterval(myInterval);
+  };
 
-### Analyzing the Bundle Size
+  return cleanup;
+}, []);
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Useful Links
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- [React Docs: Hook Rules](https://reactjs.org/docs/hooks-rules.html)
+- [Wikipedia: Pure Function](https://en.wikipedia.org/wiki/Pure_function)
+- [Wikipedia: Side Effect](<https://en.wikipedia.org/wiki/Side_effect_(computer_science)>)
